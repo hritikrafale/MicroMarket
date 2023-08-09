@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,7 +30,7 @@ public class ProductController {
 	ProductService productService;
 
 	// read all the products
-	@GetMapping("/")
+	@GetMapping("")
 	public ResponseEntity<List<Product>> getAllProducts() {
 		List<Product> productList = productService.getAllProducts();
 		return ResponseEntity.ok(productList);
@@ -37,28 +38,39 @@ public class ProductController {
 
 	// read a product
 	@GetMapping("/{productId}")
-	public Optional<Product> getProductById(@PathVariable Long productId) {
-		return productService.getProduct(productId);
+	public ResponseEntity<Product> getProductById(@PathVariable Long productId) {
+		Optional<Product> product = productService.getProduct(productId);
+		return product.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 	}
 
 	// create a product
-	@PostMapping("/")
-	public Product postProduct(@RequestBody Product productData) {
+	@PostMapping("")
+	public ResponseEntity<Product> postProduct(@RequestBody Product productData) {
 		logger.info("Product ready to get saved in DB : " + productData.toString());
-		return productService.saveProduct(productData);
+		Product product = productService.saveProduct(productData);
+		return ResponseEntity.status(HttpStatus.CREATED).body(product);
 	}
 
 	// update a product
 	@PutMapping("/{productId}")
-	public Product updateProduct(@PathVariable Long productId, @RequestBody Product productData) {
+	public ResponseEntity<Product> updateProduct(@PathVariable Long productId, @RequestBody Product productData) {
+		if(!productService.ifProductExists(productId)) {
+			return ResponseEntity.notFound().build();
+		}
+		
 		productData.setProductId(productId);
-		return productService.saveProduct(productData);
+		Product updatedProduct = productService.saveProduct(productData);
+		return ResponseEntity.status(HttpStatus.CREATED).body(updatedProduct);
 	}
 
 	// delete a product
 	@DeleteMapping("/{productId}")
-	public String deleteProduct(@PathVariable Long productId) {
+	public ResponseEntity<String> deleteProduct(@PathVariable Long productId) {
+		if(!productService.ifProductExists(productId)) {
+			return ResponseEntity.notFound().build();
+		}
+		
 		productService.deleteProduct(productId);
-		return "Product with ID " + productId + " is deleted sucessfully";
+		return ResponseEntity.ok("Product with ID " + productId + " is deleted sucessfully");
 	}
 }

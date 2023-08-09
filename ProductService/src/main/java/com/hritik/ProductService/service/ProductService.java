@@ -8,9 +8,11 @@ import com.hritik.ProductService.model.Product;
 public interface ProductService {
 	public List<Product> getAllProducts();
 	
-	public Optional<Product> getProduct(Long productID);
+	public Optional<Product> getProduct(Long productId);
 	
 	public Product saveProduct(Product productData);
 	
-	public void deleteProduct(Long productID);
+	public void deleteProduct(Long productId);
+	
+	public boolean ifProductExists(Long productId);
 }
